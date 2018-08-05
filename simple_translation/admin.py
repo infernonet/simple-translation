@@ -24,24 +24,24 @@ from simple_translation.translation_pool import translation_pool
 import django
 
 def make_translation_admin(admin):
-    
+
     class RealTranslationAdmin(admin):
-        
+
         form = TranslationModelForm
-        
+
         list_display = ('description', 'languages')
-        
+
         def __init__(self, *args, **kwargs):
             super(RealTranslationAdmin, self).__init__(*args, **kwargs)
             info = translation_pool.get_info(self.model)
             self.translated_model = info.translated_model
             self.translation_of_field = info.translation_of_field
             self.language_field = info.language_field
-    
+
         def description(self, obj):
             return getattr(translation_pool.annotate_with_translations(obj), 'translations', []) \
             	and unicode(translation_pool.annotate_with_translations(obj).translations[0]) or u'No translations'
-        
+
         def languages(self, obj):
                 lnk = '<a href="%s/?language=%s">%s</a>'
                 trans_list = [ (obj.pk, \
@@ -52,23 +52,23 @@ def make_translation_admin(admin):
         languages.allow_tags = True
 
         def get_translation(self, request, obj):
-    
+
             language = get_language_from_request(request)
- 
+
             if obj:
-                
+
                 get_kwargs = {
                     self.translation_of_field: obj,
                     self.language_field: language
                 }
-    
+
                 try:
                     return self.translated_model.objects.get(**get_kwargs)
                 except:
                     return self.translated_model(**get_kwargs)
-    
+
             return self.translated_model(**{self.language_field: language})
-                
+
         def get_form(self, request, obj=None, **kwargs):
             """
             Returns a Form class for use in the admin add view. This is used by
@@ -106,22 +106,22 @@ def make_translation_admin(admin):
             return new_form
 
         def save_translated_form(self, request, obj, form, change):
-            return form.child_form.save(commit=False)            
+            return form.child_form.save(commit=False)
 
         def save_translated_model(self, request, obj, translation_obj, form, change):
-            setattr(translation_obj, self.translation_of_field, obj) 
+            setattr(translation_obj, self.translation_of_field, obj)
             translation_obj.save()
-            
+
         def save_model(self, request, obj, form, change):
             super(RealTranslationAdmin, self).save_model(request, obj, form, change)
             if hasattr(form, 'child_form'):
                 translation_obj = self.save_translated_form(request, obj, form, change)
                 self.save_translated_model(request, obj, translation_obj, form, change)
-            
+
         def placeholder_plugin_filter(self, request, queryset):
             language = get_language_from_request(request)
             return queryset.filter(language=language)
-            
+
         def response_change(self, request, obj):
             response = super(RealTranslationAdmin, self).response_change(request, obj)
             language = get_language_from_request(request)
@@ -129,7 +129,7 @@ def make_translation_admin(admin):
                 location = response._headers['location']
                 response._headers['location'] = (location[0], "%s?language=%s" % (location[1], language))
             return response
-        
+
         def response_add(self, request, obj, post_url_continue='../%s/'):
             response = super(RealTranslationAdmin, self).response_add(request, obj, post_url_continue)
             if request.POST.has_key("_continue"):
@@ -137,15 +137,15 @@ def make_translation_admin(admin):
                 location = response._headers['location']
                 response._headers['location'] = (location[0], "%s?language=%s" % (location[1], language))
             return response
-            
+
         def delete_translation(self, request, object_id, extra_context=None):
-    
+
             language = get_language_from_request(request)
- 
+
             opts = self.model._meta
             translationopts = self.translated_model._meta
             app_label = translationopts.app_label
-    
+
             try:
                 obj = self.queryset(request).get(pk=unquote(object_id))
             except self.model.DoesNotExist:
@@ -153,16 +153,16 @@ def make_translation_admin(admin):
                 # permissions yet. We don't want an unauthenticated user to be able
                 # to determine whether a given object exists.
                 obj = None
-    
+
             if not self.has_delete_permission(request, obj):
                 raise PermissionDenied
-    
+
             if obj is None:
                 raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {'name': force_unicode(opts.verbose_name), 'key': escape(object_id)})
-    
+
             if not len(translation_pool.annotate_with_translations(obj).translations) > 1:
                 raise Http404(_('There only exists one translation for this page'))
-    
+
             translationobj = get_object_or_404(self.translated_model, **{self.translation_of_field + '__id': object_id, 'language': language})
 
             if django.VERSION[1] > 2: # pragma: no cover
@@ -179,23 +179,23 @@ def make_translation_admin(admin):
                     'user': request.user,
                 }
 
-            deleted_objects, perms_needed = get_deleted_objects([translationobj], translationopts, **kwargs)[:2]       
-    
+            deleted_objects, perms_needed = get_deleted_objects([translationobj], translationopts, **kwargs)[:2]
+
             if request.method == 'POST':
                 if perms_needed:
                     raise PermissionDenied
-    
+
                 message = _('%(obj_name)s with language %(language)s was deleted') % {
                     'language': [name for code, name in settings.LANGUAGES if code == language][0], 'obj_name': force_unicode(translationopts.verbose_name)}
                 self.log_change(request, translationobj, message)
                 self.message_user(request, message)
-    
+
                 translationobj.delete()
-    
+
                 if not self.has_change_permission(request, None):
                     return HttpResponseRedirect("../../../../")
                 return HttpResponseRedirect("../../")
-    
+
             context = {
                 "title": _("Are you sure?"),
                 "object_name": force_unicode(translationopts.verbose_name),
@@ -213,27 +213,27 @@ def make_translation_admin(admin):
                 "admin/%s/delete_confirmation.html" % app_label,
                 "admin/delete_confirmation.html"
             ], context, context_instance=context_instance)
-            
+
         def render_change_form(self, request, context, add=False, change=False,  form_url='', obj=None):
             if not self.get_translation(request, obj).pk:
                 return super(RealTranslationAdmin, self).render_change_form(request, context, True, change,  form_url, obj)
             else:
                 return super(RealTranslationAdmin, self).render_change_form(request, context, add, change,  form_url, obj)
-                
+
         def get_urls(self):
             """Get the admin urls"""
-            from django.conf.urls.defaults import patterns, url
+            from django.conf import urls
             info = "%s_%s" % (self.model._meta.app_label, self.model._meta.module_name)
-            pat = lambda regex, fn: url(regex, self.admin_site.admin_view(fn), name='%s_%s' % (info, fn.__name__))
-    
-            url_patterns = patterns('',
+            pat = lambda regex, fn: urls.url(regex, self.admin_site.admin_view(fn), name='%s_%s' % (info, fn.__name__))
+
+            url_patterns = urls.patterns('',
                 pat(r'^([0-9]+)/delete-translation/$', self.delete_translation),
             )
-    
+
             url_patterns = url_patterns + super(RealTranslationAdmin, self).get_urls()
             return url_patterns
     return RealTranslationAdmin
-    
+
 TranslationAdmin = make_translation_admin(admin.ModelAdmin)
 
 if 'cms' in settings.INSTALLED_APPS:
