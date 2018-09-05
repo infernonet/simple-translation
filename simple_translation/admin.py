@@ -237,8 +237,8 @@ def make_translation_admin(admin):
 TranslationAdmin = make_translation_admin(admin.ModelAdmin)
 
 if 'cms' in settings.INSTALLED_APPS:
-    from cms.admin.placeholderadmin import PlaceholderAdmin
-    PlaceholderTranslationAdmin = make_translation_admin(PlaceholderAdmin)
+    from cms.admin.static_placeholder import StaticPlaceholderAdmin
+    PlaceholderTranslationAdmin = make_translation_admin(StaticPlaceholderAdmin)
 
 
 
