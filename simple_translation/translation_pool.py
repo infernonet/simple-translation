@@ -57,7 +57,7 @@ class TranslationPool(object):
 
         opts = translation_of_model._meta
         for rel in opts.get_all_related_objects():
-            if rel.model == translated_model:
+            if rel.related_model == translated_model:
                 options['translation_of_field'] = rel.field.name
                 options['translations_of_accessor'] = rel.get_accessor_name()
 
@@ -118,7 +118,6 @@ class TranslationPool(object):
                 info.language_field + '__in': languages,
             })
 
-            new_result_list = []
             for obj in translations:
                 index = pk_index_map[getattr(obj, info.translation_of_field + '_id')]
                 if not hasattr(result_list[index], 'translations'):

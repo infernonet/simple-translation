@@ -223,7 +223,7 @@ def make_translation_admin(admin):
         def get_urls(self):
             """Get the admin urls"""
             from django.conf import urls
-            info = "%s_%s" % (self.model._meta.app_label, self.model._meta.module_name)
+            info = "%s_%s" % (self.model._meta.app_label, self.model._meta.model_name)
             pat = lambda regex, fn: urls.url(regex, self.admin_site.admin_view(fn), name='%s_%s' % (info, fn.__name__))
 
             url_patterns = urls.patterns('',
