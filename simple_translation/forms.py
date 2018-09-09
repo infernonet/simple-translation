@@ -1,11 +1,11 @@
 from django.forms.models import model_to_dict, fields_for_model
 from django.forms.models import  ModelForm, ModelFormMetaclass, modelform_factory, model_to_dict
-from django.forms.util import ErrorList, ErrorDict
+from django.forms.utils import ErrorList, ErrorDict
 from django.core.exceptions import NON_FIELD_ERRORS
 from simple_translation.translation_pool import translation_pool
 
 class TranslationModelFormMetaclass(ModelFormMetaclass):
-    
+
     def __new__(cls, name, bases, attrs):
         formfield_callback = attrs.get('formfield_callback', None)
         try:
@@ -13,12 +13,12 @@ class TranslationModelFormMetaclass(ModelFormMetaclass):
         except NameError:
             # We are defining TranslationModelForm itself.
             parents = None
-            
+
         new_class = super(TranslationModelFormMetaclass, cls).__new__(cls, name, bases,
                 attrs)
         if not parents:
             return new_class
-            
+
         opts = new_class._meta
         if opts.model:
             if translation_pool.is_registered(opts.model):
@@ -29,18 +29,18 @@ class TranslationModelFormMetaclass(ModelFormMetaclass):
                 new_class.declared_fields.update(new_class.child_form_class.declared_fields)
                 new_class.base_fields.update(new_class.child_form_class.base_fields)
         return new_class
-        
+
 class TranslationModelForm(ModelForm):
     __metaclass__ = TranslationModelFormMetaclass
-    
+
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
         initial={}, error_class=ErrorList, label_suffix=':',
         empty_permitted=False, instance=None):
-        
+
         model = self._meta.model
         child_model = self.child_form_class._meta.model
         info = translation_pool.get_info(model)
-        
+
         current_language = self.base_fields[info.language_field].initial
 
         if instance and instance.pk:
@@ -53,13 +53,13 @@ class TranslationModelForm(ModelForm):
                     info.language_field: current_language})
         else:
             child_instance = child_model(**{info.language_field: current_language})
-            
+
         initial.update(model_to_dict(child_instance))
         self.child_form = self.child_form_class(data=data, files=files, auto_id=auto_id, prefix=prefix,
             initial=initial, error_class=error_class, label_suffix=label_suffix,
             empty_permitted=empty_permitted, instance=child_instance)
-            
-        
+
+
         super(TranslationModelForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
             initial=initial, error_class=error_class, label_suffix=label_suffix,
             empty_permitted=empty_permitted, instance=instance)

@@ -7,7 +7,7 @@ from django.db import router
 from django import forms
 from django.contrib import admin
 
-from django.contrib.admin.util import unquote, get_deleted_objects, flatten_fieldsets
+from django.contrib.admin.utils import unquote, get_deleted_objects, flatten_fieldsets
 
 from django.utils.encoding import force_unicode
 from django.utils.functional import curry
