@@ -4,15 +4,13 @@ from django.utils.translation import ugettext as _
 
 from django.conf import settings
 from django.db import router
-from django import forms
 from django.contrib import admin
 
 from django.contrib.admin.utils import unquote, get_deleted_objects, flatten_fieldsets
 
 from django.utils.encoding import force_unicode
 from django.utils.functional import curry
-from django.http import HttpResponseRedirect, HttpResponse, Http404, \
-    HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotAllowed
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 
@@ -226,9 +224,9 @@ def make_translation_admin(admin):
             info = "%s_%s" % (self.model._meta.app_label, self.model._meta.model_name)
             pat = lambda regex, fn: urls.url(regex, self.admin_site.admin_view(fn), name='%s_%s' % (info, fn.__name__))
 
-            url_patterns = urls.patterns('',
+            url_patterns = [
                 pat(r'^([0-9]+)/delete-translation/$', self.delete_translation),
-            )
+            ]
 
             url_patterns = url_patterns + super(RealTranslationAdmin, self).get_urls()
             return url_patterns
@@ -239,6 +237,3 @@ TranslationAdmin = make_translation_admin(admin.ModelAdmin)
 if 'cms' in settings.INSTALLED_APPS:
     from cms.admin.static_placeholder import StaticPlaceholderAdmin
     PlaceholderTranslationAdmin = make_translation_admin(StaticPlaceholderAdmin)
-
-
-

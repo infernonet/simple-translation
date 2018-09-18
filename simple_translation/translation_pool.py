@@ -56,7 +56,14 @@ class TranslationPool(object):
         options['translated_model'] = translated_model
 
         opts = translation_of_model._meta
-        for rel in opts.get_all_related_objects():
+
+        all_related_objects = [
+            f for f in opts.get_fields()
+            if (f.one_to_many or f.one_to_one)
+            and f.auto_created and not f.concrete
+        ]
+
+        for rel in all_related_objects:
             if rel.related_model == translated_model:
                 options['translation_of_field'] = rel.field.name
                 options['translations_of_accessor'] = rel.get_accessor_name()
