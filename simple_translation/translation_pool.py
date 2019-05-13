@@ -48,9 +48,11 @@ class TranslationPool(object):
             and issubclass(translated_model, models.Model)
 
         if translation_of_model in self.translated_models_dict:
-            raise TranslationAllreadyRegistered, \
-                "[%s] a translation for this model is already registered" \
-                    % translation_of_model.__name__
+            raise TranslationAllreadyRegistered(
+                "[{}] translation for this model is already registered".format(
+                    translation_of_model.__name__
+                )
+            )
 
         options = {}
         options['translated_model'] = translated_model
