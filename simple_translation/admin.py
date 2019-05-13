@@ -8,7 +8,7 @@ from django.contrib import admin
 
 from django.contrib.admin.utils import unquote, get_deleted_objects, flatten_fieldsets
 
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.functional import curry
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
@@ -156,7 +156,7 @@ def make_translation_admin(admin):
                 raise PermissionDenied
 
             if obj is None:
-                raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {'name': force_unicode(opts.verbose_name), 'key': escape(object_id)})
+                raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {'name': force_text(opts.verbose_name), 'key': escape(object_id)})
 
             if not len(translation_pool.annotate_with_translations(obj).translations) > 1:
                 raise Http404(_('There only exists one translation for this page'))
@@ -184,7 +184,7 @@ def make_translation_admin(admin):
                     raise PermissionDenied
 
                 message = _('%(obj_name)s with language %(language)s was deleted') % {
-                    'language': [name for code, name in settings.LANGUAGES if code == language][0], 'obj_name': force_unicode(translationopts.verbose_name)}
+                    'language': [name for code, name in settings.LANGUAGES if code == language][0], 'obj_name': force_text(translationopts.verbose_name)}
                 self.log_change(request, translationobj, message)
                 self.message_user(request, message)
 
@@ -196,7 +196,7 @@ def make_translation_admin(admin):
 
             context = {
                 "title": _("Are you sure?"),
-                "object_name": force_unicode(translationopts.verbose_name),
+                "object_name": force_text(translationopts.verbose_name),
                 "object": translationobj,
                 "deleted_objects": deleted_objects,
                 "perms_lacking": perms_needed,
